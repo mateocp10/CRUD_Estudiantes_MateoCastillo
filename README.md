@@ -124,7 +124,7 @@ docker compose down -v     # borra también la base de datos
 | `ECONNREFUSED` o la app no conecta con MySQL | La base aún no está lista o `DB_HOST` está mal.            | Usar `DB_HOST=db`, esperar al healthcheck y revisar `docker compose logs db`.                                                        |
 | La API no responde                           | El contenedor no inició o el puerto no está publicado.     | Ejecutar `docker compose ps` y `docker compose logs app`.                                                                            |
 
-## Prueba desde una copia limpia
+## Pasos para realizar la Prueba
 
 1. Clonar el repositorio en una carpeta nueva.
 2. Crear `.env` desde `.env.example`.
