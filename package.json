@@ -1,0 +1,8 @@
+{
+  "name": "crud-estudiantes-docker",
+  "version": "1.0.0",
+  "description": "CRUD sencillo de estudiantes con Express y MySQL usando Docker Compose",
+  "type": "module",
+  "scripts": { "start": "node src/server.js", "dev": "node --watch src/server.js" },
+  "dependencies": { "dotenv": "^16.4.7", "express": "^4.21.2", "mysql2": "^3.12.0" }
+}

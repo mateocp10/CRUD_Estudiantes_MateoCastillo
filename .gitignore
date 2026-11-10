@@ -1,0 +1,20 @@
+
+# Variables de entorno
+.env
+.env.*
+
+# Permitir el archivo de ejemplo
+!.env.example
+
+# Dependencias
+node_modules/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Registros
+*.log
+
+# Configuracion local
+.vscode/
