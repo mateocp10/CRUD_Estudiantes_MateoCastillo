@@ -1,112 +1,134 @@
 # CRUD de estudiantes con Docker
 
-Aplicación REST sencilla para crear, consultar, actualizar y eliminar estudiantes. Usa Node.js, Express, MySQL y Docker Compose.
+API REST para crear, consultar, actualizar y eliminar estudiantes. Usa Node.js, Express y MySQL, y todo se levanta con Docker Compose.
 
 ## Requisitos
-- Docker Desktop instalado y en ejecución.
-- Git (para clonar el repositorio).
-- Puerto 3000 y 3306 disponibles.
 
-## Estructura del proyecto
+- Docker Desktop abierto y funcionando
+- Git
+- Puertos 3000 (API) y 3306 (MySQL) libres
+
+## Estructura
+
 ```text
-crud_estudiantes_docker/
-├── database/init.sql
+CRUD_Estudiantes/
+├── database/init.sql      # crea la tabla estudiantes
 ├── src/
-│   ├── db.js
-│   └── server.js
-├── .env.example
+│   ├── db.js              # conexión a MySQL
+│   └── server.js          # rutas de la API
+├── .env.example           # variables de ejemplo
 ├── .dockerignore
+├── .gitignore
 ├── Dockerfile
 ├── docker-compose.yml
 ├── package.json
 └── README.md
 ```
 
-## Preparar variables de entorno
-En la raíz del proyecto, copia el archivo de ejemplo y edítalo si necesitas cambiar los valores:
-```bash
-cp .env.example .env
-```
-En Windows PowerShell:
-```powershell
-Copy-Item .env.example .env
-```
-El archivo `.env.example` contiene valores demostrativos, no credenciales reales. No subir `.env` a GitHub.
+## Cómo ejecutarlo
 
-## Construir e iniciar
+**1. Clonar el repositorio**
+
+```bash
+git clone <https://github.com/mateocp10/CRUD_Estudiantes_MateoCastillo.git>
+cd <CRUD_Estudiantes_MateoCastillo>
+```
+
+**2. Crear el archivo `.env`**
+
+```powershell
+Copy-Item .env.example .env     # Windows PowerShell
+cp .env.example .env            # Linux / macOS
+```
+
+El `.env.example` solo trae valores de ejemplo, sin credenciales reales. Puedes cambiarlos en tu `.env`, que no se sube a GitHub.
+
+**3. Construir e iniciar**
+
 ```bash
 docker compose up --build -d
 ```
-Verificar los contenedores:
+
+**4. Comprobar que todo esté arriba**
+
 ```bash
 docker compose ps
 ```
-Ver los registros:
-```bash
-docker compose logs -f app
-```
-La API estará disponible en `http://localhost:3000`.
 
-## Inicialización de la base de datos
-Al iniciar MySQL por primera vez, Docker Compose ejecuta `database/init.sql` y crea la tabla `estudiantes`. Los datos se conservan en el volumen `mysql_data`.
+Deben aparecer `app` y `db` activos (la base en estado _healthy_). La API queda en `http://localhost:3000`. Si algo falla, mira los registros con `docker compose logs -f app`.
 
-Para reiniciar la base desde cero (esto elimina los datos guardados):
+## Base de datos
+
+La primera vez que se crea el volumen, MySQL ejecuta `database/init.sql` y crea la tabla `estudiantes`. Los datos se guardan en el volumen `mysql_data`, así que siguen ahí aunque reinicies los contenedores.
+
+Para empezar de cero (**borra todos los datos**):
+
 ```bash
 docker compose down -v
 docker compose up --build -d
 ```
 
-## Solicitudes CRUD
-Ejemplos usando `curl`:
+## Probar el CRUD con Postman
 
-**Crear (POST):**
-```bash
-curl -X POST http://localhost:3000/api/estudiantes -H "Content-Type: application/json" -d "{\"nombre\":\"Mateo Castillo\",\"correo\":\"mateo@example.com\",\"carrera\":\"Tecnologias de la Informacion\"}"
+Base: `http://localhost:3000/api/estudiantes`. En las peticiones con cuerpo, elige **Body → raw → JSON**.
+
+| Acción        | Método | URL                  | Cuerpo |
+| ------------- | ------ | -------------------- | ------ |
+| Crear         | POST   | `/api/estudiantes`   | Sí     |
+| Listar        | GET    | `/api/estudiantes`   | No     |
+| Consultar uno | GET    | `/api/estudiantes/1` | No     |
+| Actualizar    | PUT    | `/api/estudiantes/1` | Sí     |
+| Eliminar      | DELETE | `/api/estudiantes/1` | No     |
+
+**Cuerpo para crear (POST):**
+
+```json
+{
+  "nombre": "Mateo Castillo",
+  "correo": "mateo@uide.edu.ec",
+  "carrera": "Tecnologias de la Informacion"
+}
 ```
 
-**Listar (GET):**
-```bash
-curl http://localhost:3000/api/estudiantes
+Respuesta esperada: `201 Created` con el estudiante y su `id`.
+
+**Cuerpo para actualizar (PUT):** el mismo formato, con los datos nuevos.
+
+```json
+{
+  "nombre": "Mateo Castillo Machero",
+  "correo": "mateo@uide.edu.ec",
+  "carrera": "Tecnologias de la Informacion"
+}
 ```
 
-**Consultar por ID (GET):**
-```bash
-curl http://localhost:3000/api/estudiantes/1
-```
+Respuesta esperada: `200 OK` con `{ "mensaje": "Estudiante actualizado" }`.
 
-**Actualizar (PUT):**
-```bash
-curl -X PUT http://localhost:3000/api/estudiantes/1 -H "Content-Type: application/json" -d "{\"nombre\":\"Mateo Castillo\",\"correo\":\"mateo@example.com\",\"carrera\":\"Ingenieria en TI\"}"
-```
+**Eliminar (DELETE):** respuesta esperada `200 OK` con `{ "mensaje": "Estudiante eliminado" }`.
 
-**Eliminar (DELETE):**
-```bash
-curl -X DELETE http://localhost:3000/api/estudiantes/1
-```
+Usa el `id` que te devolvió el POST en las URLs de consultar, actualizar y eliminar.
 
 ## Detener la aplicación
-Detener sin borrar los datos:
+
 ```bash
-docker compose down
-```
-Detener y eliminar también los datos de la base:
-```bash
-docker compose down -v
+docker compose down        # conserva los datos
+docker compose down -v     # borra también la base de datos
 ```
 
 ## Errores frecuentes
-| Error | Causa | Solución |
-|---|---|---|
-| `port is already allocated` | El puerto 3000 o 3306 está ocupado. | Cambiar el puerto en `.env` o detener el servicio que lo usa. |
-| `Access denied for user` | Usuario o contraseña de MySQL no coinciden. | Revisar las variables en `.env`. Si se cambió la contraseña y ya existe el volumen, recrearlo con `docker compose down -v` (se borran datos). |
-| `ECONNREFUSED` / app no conecta a MySQL | La base aún no está lista o `DB_HOST` está mal. | Usar `DB_HOST=db`, esperar el healthcheck y revisar `docker compose logs db`. |
-| API no responde | Contenedor no está iniciado o el puerto está mal publicado. | Ejecutar `docker compose ps` y `docker compose logs app`. |
 
-## Comprobación desde una copia limpia
-1. Clonar el repositorio.
+| Error                                        | Causa                                                      | Solución                                                                                                                             |
+| -------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `port is already allocated`                  | El puerto 3000 o 3306 ya lo usa otro programa.             | Cambiar el puerto en `.env` o cerrar el programa que lo ocupa.                                                                       |
+| `Access denied for user`                     | Usuario o contraseña de MySQL distintos a los del volumen. | Revisar `DB_USER` y `DB_PASSWORD` en `.env`. Si ya existía el volumen, recrearlo con `docker compose down -v` (se borran los datos). |
+| `ECONNREFUSED` o la app no conecta con MySQL | La base aún no está lista o `DB_HOST` está mal.            | Usar `DB_HOST=db`, esperar al healthcheck y revisar `docker compose logs db`.                                                        |
+| La API no responde                           | El contenedor no inició o el puerto no está publicado.     | Ejecutar `docker compose ps` y `docker compose logs app`.                                                                            |
+
+## Prueba desde una copia limpia
+
+1. Clonar el repositorio en una carpeta nueva.
 2. Crear `.env` desde `.env.example`.
 3. Ejecutar `docker compose up --build -d`.
-4. Confirmar `docker compose ps`.
-5. Probar las solicitudes CRUD indicadas arriba.
+4. Confirmar los contenedores con `docker compose ps`.
+5. Probar el CRUD en Postman.
 6. Detener con `docker compose down`.
-
